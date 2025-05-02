@@ -1,0 +1,8 @@
+[theme]
+base = "light"
+primaryColor = "#f5c518"  # soft School-of-Life yellow
+backgroundColor = "#fdfaf5"  # muted white background
+secondaryBackgroundColor = "#f1ede5"  # very soft contrast
+textColor = "#1c1c1c"  # deep black
+font = "serif"
+ 
