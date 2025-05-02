@@ -1,0 +1,154 @@
+[
+  {
+    "id": 1745594954541,
+    "name": "Hayk Alekyan",
+    "title": "Pjilo",
+    "category": "Nihilism",
+    "content": "hello",
+    "time": "2025-04-25 19:29:14"
+  },
+  {
+    "id": 1745595673528,
+    "name": "Anna Sargysa",
+    "category": "Existentialism",
+    "title": "Heroism",
+    "content": "herooo\n",
+    "time": "2025-04-25 19:41:13"
+  },
+  {
+    "id": 1745595686071,
+    "name": "Anna Sargysa",
+    "category": "Absurdism",
+    "title": "Heroism",
+    "content": "herooo\n",
+    "time": "2025-04-25 19:41:26"
+  },
+  {
+    "id": 1745686800000,
+    "name": "John Smith",
+    "title": "Freedom",
+    "category": "Existentialism",
+    "content": "What does it truly mean to be free?",
+    "time": "2025-04-26 09:00:00"
+  },
+  {
+    "id": 1745687700000,
+    "name": "Maria Garcia",
+    "title": "Anguish",
+    "category": "Existentialism",
+    "content": "The feeling of anguish in modern life is overwhelming.",
+    "time": "2025-04-26 10:15:00"
+  },
+  {
+    "id": 1745689800000,
+    "name": "Liam Johnson",
+    "title": "Being and Nothingness",
+    "category": "Nihilism",
+    "content": "How does nothingness define our being?",
+    "time": "2025-04-26 11:30:00"
+  },
+  {
+    "id": 1745691900000,
+    "name": "Emma Brown",
+    "title": "Authenticity",
+    "category": "Existentialism",
+    "content": "Can one live an authentic life in society?",
+    "time": "2025-04-26 12:45:00"
+  },
+  {
+    "id": 1745695200000,
+    "name": "Noah Davis",
+    "title": "The Stranger",
+    "category": "Absurdism",
+    "content": "What makes life absurd like in Camus’s The Stranger?",
+    "time": "2025-04-26 14:00:00"
+  },
+  {
+    "id": 1745696100000,
+    "name": "Olivia Martinez",
+    "title": "Absurd Freedom",
+    "category": "Absurdism",
+    "content": "Does absurdity enhance or diminish our freedom?",
+    "time": "2025-04-26 15:15:00"
+  },
+  {
+    "id": 1745698200000,
+    "name": "William Rodriguez",
+    "title": "The Self",
+    "category": "Existentialism",
+    "content": "Exploring the concept of self in existential thought.",
+    "time": "2025-04-26 16:30:00"
+  },
+  {
+    "id": 1745699100000,
+    "name": "Sophia Hernandez",
+    "title": "Choice and Anxiety",
+    "category": "Existentialism",
+    "content": "Every real choice is accompanied by anxiety.",
+    "time": "2025-04-26 17:45:00"
+  },
+  {
+    "id": 1745780400000,
+    "name": "James Lee",
+    "title": "One Cannot Step Twice",
+    "category": "Nihilism",
+    "content": "Heraclitus reminds us of constant change.",
+    "time": "2025-04-27 09:00:00"
+  },
+  {
+    "id": 1745781300000,
+    "name": "Isabella Walker",
+    "title": "Angst",
+    "category": "Absurdism",
+    "content": "How does existential angst shape our lives?",
+    "time": "2025-04-27 10:15:00"
+  },
+  {
+    "id": 1745783400000,
+    "name": "Benjamin Hall",
+    "title": "Existence Precedes Essence",
+    "category": "Existentialism",
+    "content": "A core tenet of Sartre’s philosophy discussed.",
+    "time": "2025-04-27 11:30:00"
+  },
+  {
+    "id": 1745785500000,
+    "name": "Mia Allen",
+    "title": "Alienation",
+    "category": "Nihilism",
+    "content": "Are we alienated by the very progress we seek?",
+    "time": "2025-04-27 12:45:00"
+  },
+  {
+    "id": 1745787600000,
+    "name": "Elijah Young",
+    "title": "Dasein",
+    "category": "Existentialism",
+    "content": "Heidegger’s notion of being-there examined.",
+    "time": "2025-04-27 14:00:00"
+  },
+  {
+    "id": 1745788500000,
+    "name": "Amelia King",
+    "title": "Will to Power",
+    "category": "Nihilism",
+    "content": "Nietzsche’s idea of power and its implications.",
+    "time": "2025-04-27 15:15:00"
+  },
+  {
+    "id": 1745790600000,
+    "name": "Ethan Wright",
+    "title": "Meaning",
+    "category": "Absurdism",
+    "content": "Can we find meaning in an indifferent universe?",
+    "time": "2025-04-27 16:30:00"
+  },
+  {
+    "id": 1745938458091,
+    "name": "Asghik Minasyan",
+    "title": "4rd gyux",
+    "content": "ekhherhfurufirerer",
+    "category": "Logic",
+    "time": "2025-04-29 18:54:18"
+  }
+]
