@@ -198,6 +198,25 @@ def main():
         else:
             st.info("No posts yet to visualize.")
 
+    elif page == "About Us":
+        st.title("About Us")
+
+        team_html = """
+        ### 👤 Meet the Founders  
+        <div style="display:flex; gap:2rem;">
+        <div style="text-align:center;">
+            <img src="https://your-cdn.com/you.jpg" alt="Your Name" style="width:120px;border-radius:50%;"/>
+            <p><strong>Your Name</strong><br/>Data Scientist & Lead Developer</p>
+        </div>
+        <div style="text-align:center;">
+            <img src="https://your-cdn.com/cofounder.jpg" alt="Co-founder" style="width:120px;border-radius:50%;"/>
+            <p><strong>Co-Founder</strong><br/>Philosophy Enthusiast</p>
+        </div>
+        </div>
+        """
+
+        st.markdown(team_html, unsafe_allow_html=True)
+
     # Forum
     elif page == "Forum":
         st.title("🗣️ Forum")
@@ -311,10 +330,8 @@ def main():
             st.info("No resources folder found.")
         else:
             resources = [
-                ("Philosophy_Basics.pdf", resource_dir / "Philosophy_Basics.pdf"),
-                ("Nietzsche_Essay.docx", resource_dir / "Nietzsche_Essay.docx"),
-                ("quotes1.xlsx", resource_dir / "resources/quotes1.xlsx"),
-                ("Camus_Absurdism.png", resource_dir / "Camus_Absurdism.png"),
+                ("Այսպես Խոսեց Զրադաշտը.pdf", resource_dir / "Այսպես Խոսեց Զրադաշտը.pdf"),
+                ("Բարուց և Չարից Անդին.pdf", resource_dir / "Բարուց և Չարից Անդին.pdf")
             ]
             icon_map = {
                 '.pdf': '📄', '.docx': '📝', '.xlsx': '📊', '.xls': '📊',
