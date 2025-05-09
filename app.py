@@ -13,7 +13,6 @@ from firebase_admin import credentials, firestore
 firebase = pyrebase.initialize_app(st.secrets["firebase_config"])
 auth = firebase.auth()
 
-KEY_PATH = "ServiceAccountKey.json"
 try:
     firebase_admin.get_app()
 except ValueError:
