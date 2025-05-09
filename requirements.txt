@@ -1,4 +1,5 @@
 streamlit
 streamlit_option_menu
 firebase-admin
-pyrebase4
+pyrebase
+docx
