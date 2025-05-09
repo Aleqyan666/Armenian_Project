@@ -1,18 +1,115 @@
 import streamlit as st
 from streamlit_option_menu import option_menu
-import json
-import base64
+import json, random, base64, urllib.parse, os, hashlib
 import pandas as pd
 from pathlib import Path
 from datetime import datetime
-import random
-import urllib.parse
+
+import pyrebase
+import firebase_admin
+from firebase_admin import credentials, firestore
+
+# Init Firebase Auth (Pyrebase) 
+firebase = pyrebase.initialize_app(st.secrets["firebase_config"])
+auth = firebase.auth()
+
+KEY_PATH = "ServiceAccountKey.json"
+try:
+    firebase_admin.get_app()
+except ValueError:
+    cred = credentials.Certificate(KEY_PATH)
+    firebase_admin.initialize_app(cred)
+db = firestore.client()
 
 
-# 1) Page config (must be first Streamlit command)
-st.set_page_config(page_title="Philosophy Portal", layout="wide")
+def quote_id(quote: dict) -> str:
+    return hashlib.sha1((quote["author"] + "|" + quote["text"]).encode()).hexdigest()
 
-# 2) Inject custom CSS for styling
+def get_favorites_for_user(uid: str) -> set[str]:
+    doc = db.collection("favorites").document(uid).get()
+    return set(doc.to_dict().get("quote_ids", [])) if doc.exists else set()
+
+def save_favorites_for_user(uid: str, favs: set[str]):
+    db.collection("favorites").document(uid).set({"quote_ids": list(favs)})
+
+def DisplayQuoteCard(quote: dict, user_uid: str, favorites: set[str]):
+    qid = quote_id(quote)
+    is_fav = (qid in favorites)
+
+    # Quote styling
+    st.markdown(f"""
+    <div style="
+      background:#f9f9f9;
+      padding:1em;
+      margin-bottom:1em;
+      border-radius:8px;
+      box-shadow:1px 1px 8px rgba(0,0,0,0.1);
+    ">
+      <p style="font-style:italic;">"{quote['text']}"</p>
+      <p style="text-align:right; font-weight:bold;">– {quote['author']}</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Add or Remove button
+    if is_fav:
+        if st.button("Remove from Favorites", key=f"rm_{qid}"):
+            favorites.remove(qid)
+            save_favorites_for_user(user_uid, favorites)
+            st.rerun()
+    else:
+        if st.button("Add to Favorites", key=f"add_{qid}"):
+            favorites.add(qid)
+            save_favorites_for_user(user_uid, favorites)
+            st.rerun()
+
+# --- 3) Helper: Firestore operations ---
+def get_posts():
+    docs = db.collection("posts") \
+             .order_by("time", direction=firestore.Query.DESCENDING) \
+             .stream()
+    return [doc.to_dict() for doc in docs]
+
+def add_post(post):
+    db.collection("posts").document(str(post["id"])).set(post)
+
+
+# --- 4) Authentication UI ---
+def LoginUI():
+    st.subheader("🔑 Մուտք")
+    email = st.text_input("էլ. հասցե", key="login_email")
+    pwd = st.text_input("Գաղտնաբառ", type="password", key="login_pwd")
+    if st.button("Մուտք գործել"):
+        try:
+            user = auth.sign_in_with_email_and_password(email, pwd)
+            st.session_state.user = user
+            st.success("Դուք մուտք գործեցիք:")
+        except Exception as e:
+            st.error("Մուտք գործելիս տեղի ունեցավ սխալ:")
+            # st.error("Login failed: " + str(e))
+
+def RegisterUI():
+    st.subheader("🆕 Գրանցում")
+    email = st.text_input("էլ. հասցե", key="reg_email")
+    pwd   = st.text_input("Գաղտնաբառ", type="password", key="reg_pwd")
+    if st.button("Ստեղծել հաշիվ"):
+        try:
+            user = auth.create_user_with_email_and_password(email, pwd)
+            st.success("Հաշիվը ստեղծվեց: Խնդրում ենք այժմ մուտք գործել:")
+        except Exception as e:
+            st.error("Գրանցվելիս տեղի ունեցավ սխալ:")
+            # st.error("Registration failed: " + str(e))
+
+def RequireLogin():
+    if "user" not in st.session_state:
+        choice = st.radio("Ունե՞ք հաշիվ:", ["Մուտք","Գրանցում"])
+        if choice == "Մուտք":
+            LoginUI()
+        else:
+            RegisterUI()
+        st.stop()  # halt further rendering until logged in
+
+
+st.set_page_config(page_title="Հասարակական Բռնաճնշումներ", layout="wide")
 st.markdown("""
     <style>
         html, body, [class*="css"] {
@@ -46,40 +143,14 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-# 3) JSON storage path
-POSTS_FILE = Path("forum_posts.json")
-if not POSTS_FILE.exists():
-    POSTS_FILE.write_text("[]", encoding="utf-8")
 
-# 4) Load / save helpers
-def GetPosts():
-    return json.loads(POSTS_FILE.read_text(encoding="utf-8"))
-
-def SavePosts(posts):
-    POSTS_FILE.write_text(json.dumps(posts, ensure_ascii=False, indent=2), encoding="utf-8")
-
-def GetQuotes(json_path: str = "quotes.json") -> list[dict]:
+def GetQuotes(json_path: str = "quotes.json") -> list[dict]: # TODO
     try:
         with open(json_path, "r", encoding="utf-8") as f:
             return json.load(f)
     except FileNotFoundError:
         # Fallback to an empty list if file is missing
         return []
-    
-def DisplayQuoteCard(quote: dict):
-    card_html = f"""
-    <div style="
-        background-color: #f9f9f9;
-        padding: 1.2em;
-        margin-bottom: 1em;
-        border-radius: 10px;
-        box-shadow: 2px 2px 12px rgba(0, 0, 0, 0.1);
-    ">
-        <p style="font-size: 1.2em; font-style: italic;">"{quote['text']}"</p>
-        <p style="text-align: right; font-weight: bold; margin-top: 1em;">– {quote['author']}</p>
-    </div>
-    """
-    st.markdown(card_html, unsafe_allow_html=True)
 
 def GetYoutubeId(url):
     qs = urllib.parse.parse_qs(urllib.parse.urlparse(url).query)
@@ -109,8 +180,6 @@ def VideoCard(title, url):
 
 # 5) Main app
 def main():
-    # pages = ["Home", "About Us", "Forum", "Quotes", "Reportages", "Resources"]
-    # page = st.sidebar.radio("Go to", pages)
     with st.sidebar:
         page = option_menu(
             menu_title="Navigation",
@@ -133,19 +202,18 @@ def main():
 
     # Home
     if page == "Home":
-        CATEGORIES = ["Ethics", "Metaphysics", "Logic", "Politics", "Aesthetics", "Other"]
+        # CATEGORIES = ["Ethics", "Metaphysics", "Logic", "Politics", "Aesthetics", "Other"]
 
         st.title("🏛️ Welcome to the Philosophy Portal")
         st.write("Explore thoughts, discussions, and ideas from the greatest minds and community voices.")
 
-        posts = GetPosts()
+        posts = get_posts()
 
         # 2. Key metrics
         col1, col2, col3 = st.columns(3)
         col1.metric("📄 Total Posts", len(posts))
-        col2.metric("👥 Registered Users", 0 )
-                    # get_user_count())
-        col3.metric("🏷️ Categories", len(CATEGORIES))
+        #! col2.metric("👥 Registered Users", get_user_count())
+        # col3.metric("🏷️ Categories", len(CATEGORIES))
 
         st.markdown("---")
 
@@ -190,103 +258,134 @@ def main():
     
         st.markdown("---")
 
-        # 6. Posts by Category Visualization
-        st.subheader("📊 Posts by Category")
-        if posts:
-            cat_counts = pd.Series([p["category"] for p in posts]).value_counts()
-            st.bar_chart(cat_counts)
-        else:
-            st.info("No posts yet to visualize.")
 
     elif page == "About Us":
         st.title("About Us")
 
+        # Mission & Vision
+        st.subheader("🌟 Our Mission")
+        st.write(
+            "At the Philosophy Portal, we strive to make philosophical discourse "
+            "accessible, inclusive, and vibrant. We connect thinkers from around the world "
+            "to explore timeless questions and contemporary issues."
+        )
+
+        # Team Profiles
         team_html = """
         ### 👤 Meet the Founders  
-        <div style="display:flex; gap:2rem;">
-        <div style="text-align:center;">
-            <img src="https://your-cdn.com/you.jpg" alt="Your Name" style="width:120px;border-radius:50%;"/>
-            <p><strong>Your Name</strong><br/>Data Scientist & Lead Developer</p>
+        <div style="display:flex; flex-wrap: wrap; gap:2rem;">
+        <div style="flex: 1 1 200px; text-align:center;">
+            <img src="https://your-cdn.com/you.jpg" alt="Your Name" 
+                style="width:120px;border-radius:50%;"/>
+            <p><strong>Your Name</strong><br/>
+            Data Scientist & Lead Developer</p>
+            <p>✉️ <a href="mailto:you@example.com">you@example.com</a><br/>
+            📞 +1 (555) 123-4567<br/>
+            🔗 <a href="https://linkedin.com/in/yourprofile" target="_blank">LinkedIn</a>
+            </p>
         </div>
-        <div style="text-align:center;">
-            <img src="https://your-cdn.com/cofounder.jpg" alt="Co-founder" style="width:120px;border-radius:50%;"/>
-            <p><strong>Co-Founder</strong><br/>Philosophy Enthusiast</p>
+        <div style="flex: 1 1 200px; text-align:center;">
+            <img src="https://your-cdn.com/cofounder.jpg" alt="Co-founder" 
+                style="width:120px;border-radius:50%;"/>
+            <p><strong>Co-Founder Name</strong><br/>
+            Philosophy Enthusiast & Community Manager</p>
+            <p>✉️ <a href="mailto:cofounder@example.com">cofounder@example.com</a><br/>
+            📞 +1 (555) 987-6543<br/>
+            🔗 <a href="https://twitter.com/cofounder" target="_blank">Twitter</a>
+            </p>
         </div>
         </div>
         """
-
         st.markdown(team_html, unsafe_allow_html=True)
+
+        st.markdown("---")
 
     # Forum
     elif page == "Forum":
         st.title("🗣️ Forum")
+        RequireLogin()
 
-        CATEGORIES = ["Ethics", "Metaphysics", "Logic", "Politics", "Aesthetics", "Other"]
+        user_email = st.session_state.user["email"]
+        st.title(f"Logged in as {user_email}")
 
-        for key in ("name_input", "title_input", "content_input", "category_input"):
-            if key not in st.session_state:
-                st.session_state[key] = "" if key != "category_input" else CATEGORIES[0]
+        name = user_email.split("@")[0]  
+        title = st.text_input("📝 Topic Title")
+        content = st.text_area("💬 Your message")
 
-        col1, col2 = st.columns(2)
-        with col1:
-            name = st.text_input("👤 Your Name & Surname", key="name_input")
-        with col2:
-            title = st.text_input("📝 Topic Title", key="title_input")
-        category = st.selectbox("📚 Select Category", CATEGORIES, key="category_input")
-        content = st.text_area("💬 Share your thoughts...", key="content_input")
-
-        if st.button("Submit"):
-            if name and title and content:
-                posts = GetPosts()  
-                new_post = {
-                    "id": int(datetime.now().timestamp() * 1000),
+        if st.button("Submit Post"):
+            if title and content:
+                post = {
+                    "id": int(datetime.now().timestamp()*1000),
                     "name": name,
                     "title": title,
                     "content": content,
-                    "category": category,
                     "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 }
-                posts.append(new_post)
-                SavePosts(posts)    # your existing function to write posts JSON
-                st.success("✅ Post submitted!")
-                # Clear inputs
-                st.session_state.update({
-                    "name_input": "",
-                    "title_input": "",
-                    "content_input": "",
-                    "category_input": CATEGORIES[0]
-                })
-                st.experimental_rerun()
+                add_post(post)
+                st.success("Posted!")
             else:
-                st.error("⚠️ Please fill in all fields before submitting.")
+                st.error("Fill in both title and content.")
 
-        # Display posts
-        st.subheader("📚 Forum Posts")
-        posts = GetPosts()
-        if posts:
-            for post in reversed(posts):
-                with st.container():
-                    st.markdown(f"#### 🧠 {post['title']}")
-                    st.write(post["content"])
-                    st.markdown(
-                        f"<div style='font-size:0.9em; color:grey;'>"
-                        f"📁 {post.get('category','Uncategorized')} &nbsp;|&nbsp; "
-                        f"✍️ {post['name']} &nbsp;|&nbsp; ⏰ {post['time']}"
-                        f"</div>",
-                        unsafe_allow_html=True
-                    )
-                    st.markdown("<hr style='border:1px solid #e0e0e0;'>", unsafe_allow_html=True)
+        st.subheader("📚 All Posts")
+        # CATEGORIES = ["Ethics", "Metaphysics", "Logic", "Politics", "Aesthetics", "Other"]
+        # theme = st.selectbox("🔖 Filter by theme", CATEGORIES)
+        all_posts = get_posts()
+
+        # filtered = [p for p in all_posts if p.get("category") == theme]
+        filtered = all_posts
+        # st.subheader(f"📚 Showing posts: {theme}")
+        if filtered:
+            for p in filtered:
+                st.markdown(f"#### {p['title']}")
+                st.write(p["content"])
+                st.caption(f"By {p['name']} at {p['time']}")
+                st.markdown("---")
         else:
-            st.info("No posts yet. Be the first to share your thoughts!")
-
+            st.info("No posts in this category.")
+            
+            for p in get_posts():
+                st.markdown(f"#### {p['title']}")
+                st.write(p["content"])
+                st.caption(f"By {p['name']} at {p['time']}")
+                st.markdown("---")
 
     # Quotes
-    elif page == "Quotes":
-        st.title("Famous Philosophical Quotes")
-        quotes = GetQuotes()
+    elif page == "Quotes": 
+        st.title("Հայտնի Խոսքեր և Մտքեր")
 
-        for quote in quotes:
-            DisplayQuoteCard(quote)
+        if "user" not in st.session_state:
+            st.error("Խնդրում ենք մուտք գործել կայքեջ:")
+            st.stop()
+        user_uid = st.session_state.user["localId"]
+
+        quotes = GetQuotes()
+        authors = sorted({q["author"] for q in quotes})
+
+        # Author filter and “Show My Favorites” toggle
+        col1, col2 = st.columns([3,1])
+        with col1:
+            author_filter = st.selectbox("Filter by author", ["All"] + authors)
+        with col2:
+            show_favs = st.checkbox("Իմ Հավանածները")
+
+        # Fetch current favorites once
+        favorites = get_favorites_for_user(user_uid)
+
+        # Filter quotes
+        def matches(q):
+            return (
+                (author_filter == "All" or q["author"] == author_filter)
+                and (not show_favs or quote_id(q) in favorites)
+            )
+
+        filtered = [q for q in quotes if matches(q)]
+        st.write(f"Ցուցադրվում են {len(filtered)} խոսքեր")
+
+        # Render each, passing in the same `favorites` set
+        for q in filtered:
+            DisplayQuoteCard(q, user_uid, favorites)
+
+
     # Reportages
     elif page == "Reportages":
 
@@ -297,6 +396,22 @@ def main():
         "Understanding Nietzsche: Philosophy in Modern Times",
         "https://www.youtube.com/watch?v=fLJBzhcSWTk"
     ),  
+    (   
+        "The Case for Idealism: Truth, Facts, and Existence",
+        "https://www.youtube.com/watch?v=7quW8AlngH0&ab_channel=NathanHawkins"
+    ),
+    (
+        "OSHO: Nobody Allows Anybody to Be Just Himself",
+        "https://www.youtube.com/watch?v=UngV-qwNkW0&ab_channel=OSHOInternational"
+    ),
+    (
+        "We’re wired for conformity. That’s why we have to practice dissent. Todd Rose for Big Think",
+        "https://www.youtube.com/watch?v=rd8VHbIYqRs&ab_channel=BigThink"
+    ),
+    (
+        "Nietzsche - Follow No One, Trust Yourself",
+        "https://www.youtube.com/watch?v=e-k7b8Zmh70&ab_channel=FreedominThought"
+    ),
     (
         "Existentialism Explained: Key Concepts of Jean-Paul Sartre",
         "https://www.youtube.com/watch?v=VtP-N9pqoKk"
@@ -331,7 +446,10 @@ def main():
         else:
             resources = [
                 ("Այսպես Խոսեց Զրադաշտը.pdf", resource_dir / "Այսպես Խոսեց Զրադաշտը.pdf"),
-                ("Բարուց և Չարից Անդին.pdf", resource_dir / "Բարուց և Չարից Անդին.pdf")
+                ("Բարուց և Չարից Անդին.pdf", resource_dir / "Բարուց և Չարից Անդին.pdf"),
+                ("The Power of Conformity.pdf", resource_dir / "The Power of Conformity.pdf"),
+                ("Festinger, Leon - A theory of cognitive dissonance (1968, Stanford University Press).pdf", resource_dir / "Festinger, Leon - A theory of cognitive dissonance (1968, Stanford University Press).pdf"),
+                ("Cognitive Dissonance. Reexamining a Pivotal Theory in Psychology, Second Edition.pdf", resource_dir / "Cognitive Dissonance. Reexamining a Pivotal Theory in Psychology, Second Edition.pdf")
             ]
             icon_map = {
                 '.pdf': '📄', '.docx': '📝', '.xlsx': '📊', '.xls': '📊',

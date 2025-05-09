@@ -1,1 +1,4 @@
 venv
+secrets.toml
+database_access.json
+ServiceAccountKey.json
