@@ -4,6 +4,7 @@ firebase-admin
 pyrebase4
 docx
 pycryptodome
+requests
 urlib3
 pygments==2.19.1
 mdurl==0.1.2
