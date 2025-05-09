@@ -17,7 +17,8 @@ KEY_PATH = "ServiceAccountKey.json"
 try:
     firebase_admin.get_app()
 except ValueError:
-    cred = credentials.Certificate(KEY_PATH)
+    # cred = credentials.Certificate(KEY_PATH)
+    cred = credentials.Certificate(dict(st.secrets["firebase_sa_key"]))
     firebase_admin.initialize_app(cred)
 db = firestore.client()
 
