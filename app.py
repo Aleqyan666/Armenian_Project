@@ -1,6 +1,6 @@
 import streamlit as st
 from streamlit_option_menu import option_menu
-import json, random, base64, urllib.parse, os, hashlib
+import json, random, base64, urllib.parse, os, hashlib, toml
 import pandas as pd
 from pathlib import Path
 from datetime import datetime
@@ -16,7 +16,11 @@ auth = firebase.auth()
 try:
     firebase_admin.get_app()
 except ValueError:
-    cred = credentials.Certificate(dict(st.secrets["firebase_sa_key"]))
+    with open(".streamlit/secrets.toml", "r") as f:
+        toml_data = toml.load(f)
+    json_data = json.dumps(toml_data["firebase_sa_key"])
+    cred = credentials.Certificate(toml_data["firebase_sa_key"])
+    # cred = credentials.Certificate(dict(st.secrets["firebase_sa_key"]))
     firebase_admin.initialize_app(cred)
 db = firestore.client()
 
@@ -244,12 +248,7 @@ def main():
         else:
             st.info("No posts match your search. Try a different keyword!")
 
-        # 7. Call-to-Action Button
-        if st.button("📝 Jump to Forum"):
-            st.info("Use the sidebar to select **Forum** and join the discussion!")
-
-        st.markdown("---")
-
+        
         # 4. Quote of the Day
         st.subheader("💬 Quote of the Day")
         quote = random.choice(GetQuotes())
@@ -363,7 +362,7 @@ def main():
         # Author filter and “Show My Favorites” toggle
         col1, col2 = st.columns([3,1])
         with col1:
-            author_filter = st.selectbox("Filter by author", ["All"] + authors)
+            author_filter = st.selectbox("Փնտրել ըստ հեղինակի", ["Բոլորը"] + authors)
         with col2:
             show_favs = st.checkbox("Իմ Հավանածները")
 
@@ -373,7 +372,7 @@ def main():
         # Filter quotes
         def matches(q):
             return (
-                (author_filter == "All" or q["author"] == author_filter)
+                (author_filter == "Բոլորը" or q["author"] == author_filter)
                 and (not show_favs or quote_id(q) in favorites)
             )
 
@@ -388,7 +387,7 @@ def main():
     # Reportages
     elif page == "Reportages":
 
-        st.title("🎥 Reportages & Videos")
+        st.title("🎥 Տեսանյութեր և Ռեպորտաժներ")
 
         videos = [
     (
@@ -438,10 +437,11 @@ def main():
 
     # Resources
     elif page == "Resources":
-        st.title("Resources")
+        st.title("Բարի Գալուստ Գիտադարան")
+        st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)  # Vertical space
         resource_dir = Path("resources")
         if not resource_dir.exists():
-            st.info("No resources folder found.")
+            st.info("Ֆայլերը չեն գնտվել.")
         else:
             resources = [
                 ("Այսպես Խոսեց Զրադաշտը.pdf", resource_dir / "Այսպես Խոսեց Զրադաշտը.pdf"),
@@ -465,18 +465,19 @@ def main():
                     icon = icon_map.get(ext, '📁')
                     col1, col2, col3 = st.columns([6,1,1])
                     with col1:
-                        st.write(f"{icon} **{name}**")
+                        st.markdown(f"<span style='font-size:20px;'>{icon} {name}</span>", unsafe_allow_html=True)
+                        # st.write(f"{icon} **{name}**")
                     with col2:
                         if not st.session_state[f"view_{name}"]:
-                            if st.button("View", key=f"btn_view_{name}"):
+                            if st.button("Դիտել", key=f"btn_view_{name}"):
                                 st.session_state[f"view_{name}"] = True
                     with col3:
                         data = path_obj.read_bytes()
-                        st.download_button(label="Download", data=data, file_name=name, key=f"btn_down_{name}")
+                        st.download_button(label="Ներբեռնել", data=data, file_name=name, key=f"btn_down_{name}")
 
                     # Show preview if flagged
                     if st.session_state[f"view_{name}"]:
-                        with st.expander(f"Preview: {name}", expanded=True):
+                        with st.expander(f"Նախադիտում: {name}", expanded=True):
                             if ext == '.csv':
                                 df = pd.read_csv(path_obj)
                                 st.dataframe(df)
@@ -495,14 +496,14 @@ def main():
                                     from docx import Document
                                     doc = Document(str(path_obj))
                                     text = ''.join([p.text for p in doc.paragraphs])
-                                    st.text_area("Document Preview", text, height=300)
+                                    st.text_area("Փաստաթղթի Նախադիոտւմ", text, height=300)
                                 except ImportError:
                                     st.warning("Install python-docx to preview DOCX files.")
                             # Close button
-                            if st.button("Close Preview", key=f"btn_close_{name}"):
+                            if st.button("Փակել", key=f"btn_close_{name}"):
                                 st.session_state[f"view_{name}"] = False
                 else:
-                    st.error(f"Resource not found: {name}")
+                    st.error(f"Ֆայլերը չեն գտնվել: {name}")
 
 if __name__ == "__main__":
     main() 
