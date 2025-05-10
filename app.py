@@ -172,6 +172,27 @@ def GetYoutubeId(url):
     qs = urllib.parse.parse_qs(urllib.parse.urlparse(url).query)
     return qs.get("v", [None])[0]
 
+def SingleVideoCard(title, url):
+    video_id = url.split("v=")[-1].split("&")[0]
+    thumb = f"https://img.youtube.com/vi/{video_id}/0.jpg"
+
+    card_html = f"""
+    <div style="
+        max-width: 320px;
+        border-radius: 14px;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        transition: transform 0.2s;
+    " onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
+        <a href="{url}" target="_blank" style="text-decoration: none;">
+            <img src="{thumb}" style="width: 100%; display: block; border-radius: 14px;" />
+        </a>
+    </div>
+    """
+    st.markdown(card_html, unsafe_allow_html=True)
+
+
+
 def VideoCard(title, url):
     vid_id = GetYoutubeId(url)
     thumb = f"https://img.youtube.com/vi/{vid_id}/hqdefault.jpg"
@@ -234,7 +255,7 @@ def main():
 
         # 3. Search bar & quick filter
         st.subheader("🔍 Փնտրել Հրապարակումներ")
-        query = st.text_input("", placeholder="Type to search by title or content…")
+        query = st.text_input("", placeholder="Փնտել հրապարակումներ՝ ըստ վերնագրի և բովանդակության:")
         if query:
             filtered_posts = [
                 p for p in posts
@@ -250,29 +271,66 @@ def main():
             reverse=True,
         )
 
-        # 4. Latest Forum Posts
         st.subheader("📰 Վերջին Հրապարակումները")
+
         if sorted_posts:
             for post in sorted_posts[:5]:
-                st.markdown(f"**{post['title']}**")
-                st.markdown(f"*By {post['name']} on {post['time']}*")
+                st.markdown(f"""
+                    <div style="font-size: 1.3rem;">
+                        <strong>{post['title']}</strong><br>
+                        <em>By {post['name']} on {post['time']}</em>
+                    </div>
+                """, unsafe_allow_html=True)
                 st.markdown("---")
         else:
-            st.info("No posts match your search. Try a different keyword!")
+            st.info("Որոնման արդյունքում ոչինչ չի գտնվել: Փորձեք այլ բանալի բառեր:")
 
         
         # 4. Quote of the Day
         st.subheader("💬 Օրվա Միտքը")
         quote = random.choice(GetQuotes())
-        st.markdown(f"> _“{quote['text']}”_  \n— **{quote['author']}**")
-    
+        st.markdown(f"""
+            <div style="font-size: 20px;">
+                “{quote['text']}”  <br>
+                — <strong>{quote['author']}</strong>
+            </div>
+        """, unsafe_allow_html=True)    
         st.markdown("---")
 
+        # 🎯 Video of the Day
+        videos = [
+            ("Understanding Nietzsche: Philosophy in Modern Times", "https://www.youtube.com/watch?v=fLJBzhcSWTk", "Փիլիսոփայություն"),
+            ("The Case for Idealism: Truth, Facts, and Existence", "https://www.youtube.com/watch?v=7quW8AlngH0", "Փիլիսոփայություն"),
+            ("OSHO: Nobody Allows Anybody to Be Just Himself", "https://www.youtube.com/watch?v=UngV-qwNkW0", "Ինդիվիդուալիզմ"),
+            ("We’re wired for conformity...", "https://www.youtube.com/watch?v=rd8VHbIYqRs", "Հոգեբանություն"),
+            ("Nietzsche - Follow No One...", "https://www.youtube.com/watch?v=e-k7b8Zmh70", "Ինդիվիդուալիզմ"),
+            ("Existentialism Explained", "https://www.youtube.com/watch?v=VtP-N9pqoKk", "Էքզիստենցիալիզմ"),
+            ("The Philosophy of Absurdism", "https://www.youtube.com/watch?v=DTRJx1d4eks", "Աբսուրդիզմ"),
+            ("Nietzsche’s Will to Power", "https://www.youtube.com/watch?v=bb7Q8Wu1HNA", "Ինդիվիդուալիզմ"),
+            ("Heidegger and Being", "https://www.youtube.com/watch?v=0-yvwlKTTbk", "Էքզիստենցիալիզմ")
+        ]
+        st.subheader("📺 Օրվա Տեսանյութը")
+        random_video = random.choice(videos)
+        title, url, category = random_video
+
+        left, right = st.columns([2, 2.2])  # Adjust ratio as needed
+
+        with left:
+            st.markdown(f"""
+            <div style="font-size: 20px;">
+                <strong style="font-size: 20px;">🎬 {title}</strong><br>
+                🌐 <a href="{url}" target="_blank">Դիտել Տեսանյութը</a><br>
+                🏷️ <em>Թեմա՝ {category}</em>
+            </div>
+            """, unsafe_allow_html=True)
+
+        with right:
+            SingleVideoCard(title, url)
 
     elif page == "Մեր Մասին":
         st.title("Մեր Մասին")
 
-        st.subheader("🌟 Մեր Առաքելությունը")
+        st.subheader("🎯 Մեր Առաքելությունը")
         st.write(
             "At the Philosophy Portal, we strive to make philosophical discourse "
             "accessible, inclusive, and vibrant. We connect thinkers from around the world "
@@ -448,7 +506,8 @@ def main():
                 "Էքզիստենցիալիզմ"
             )]
         all_categories = sorted(set([v[2] for v in videos]))
-        selected_category = st.selectbox("🔍 Փնտրել ըստ թեմայի", ["Բոլորը"] + all_categories)
+        st.markdown("<div style='font-size:18px; font-weight:600;'>🔍 Ընտրել թեման</div>", unsafe_allow_html=True)
+        selected_category = st.selectbox("", ["Բոլորը"] + all_categories)
 
         # Filter based on category
         if selected_category != "Բոլորը":
@@ -469,7 +528,7 @@ def main():
         st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)  # Vertical space
         resource_dir = Path("resources")
         if not resource_dir.exists():
-            st.info("Ֆայլերը չեն գնտվել.")
+            st.info("Ֆայլերը չեն գնտվել:")
         else:
             resources = [
                 ("Այսպես Խոսեց Զրադաշտը.pdf", resource_dir / "Այսպես Խոսեց Զրադաշտը.pdf"),
