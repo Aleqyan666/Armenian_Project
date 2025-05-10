@@ -80,8 +80,16 @@ def get_posts():
              .stream()
     return [doc.to_dict() for doc in docs]
 
-def add_post(post):
-    db.collection("posts").document(str(post["id"])).set(post)
+def add_post(post, reply_to_id=None):
+    if reply_to_id:
+        ref = db.collection("posts").document(str(reply_to_id))
+        doc = ref.get()
+        if doc.exists:
+            replies = doc.to_dict().get("replies", [])
+            replies.append(post)
+            ref.update({"replies": replies})
+    else:
+        db.collection("posts").document(str(post["id"])).set(post)
 
 
 # --- 4) Authentication UI ---
@@ -339,32 +347,42 @@ def main():
 
         # Team Profiles
         team_html = """
-        ### 👤 Meet the Founders  
-        <div style="display:flex; flex-wrap: wrap; gap:2rem;">
-        <div style="flex: 1 1 200px; text-align:center;">
-            <img src="https://your-cdn.com/you.jpg" alt="Your Name" 
-                style="width:120px;border-radius:50%;"/>
-            <p><strong>Your Name</strong><br/>
-            Data Scientist & Lead Developer</p>
-            <p>✉️ <a href="mailto:you@example.com">you@example.com</a><br/>
-            📞 +1 (555) 123-4567<br/>
-            🔗 <a href="https://linkedin.com/in/yourprofile" target="_blank">LinkedIn</a>
-            </p>
-        </div>
-        <div style="flex: 1 1 200px; text-align:center;">
-            <img src="https://your-cdn.com/cofounder.jpg" alt="Co-founder" 
-                style="width:120px;border-radius:50%;"/>
-            <p><strong>Co-Founder Name</strong><br/>
-            Philosophy Enthusiast & Community Manager</p>
-            <p>✉️ <a href="mailto:cofounder@example.com">cofounder@example.com</a><br/>
-            📞 +1 (555) 987-6543<br/>
-            🔗 <a href="https://twitter.com/cofounder" target="_blank">Twitter</a>
-            </p>
-        </div>
+        ## 👤 Ծանոթացեք Մեր Թիմին 
+        <div style='height:20px;'></div> 
+
+        <div style="font-size: 1.05rem;">  <!-- Adjusted font size -->
+            <div style="display:flex; flex-wrap: wrap; gap:2rem;">
+                <div style="flex: 1 1 200px; text-align:center;">
+                    <img src="https://your-cdn.com/you.jpg" alt="Your Name" 
+                        style="width:120px;border-radius:50%;"/>
+                    <p><strong style="font-size: 1.15rem;">Գեորգի Գունդակչյան</strong><br/>
+                    Data Scientist & Lead Developer</p>
+                    <p>✉️ <a href="mailto:georgi_gundakchyan@edu.aua.am">georgi_gundakchyan@edu.aua.am</a><br/>
+                    📞 +374 99830003<br/>
+                    🔗 <a href="https://linkedin.com/in/yourprofile" target="_blank">LinkedIn</a></p>
+                </div>
+                <div style="flex: 1 1 200px; text-align:center;">
+                    <img src="https://your-cdn.com/cofounder.jpg" alt="Co-founder" 
+                        style="width:120px;border-radius:50%;"/>
+                    <p><strong style="font-size: 1.15rem;">Հայկ Ալեքյան</strong><br/>
+                    Philosophy Enthusiast & Community Manager</p>
+                    <p>✉️ <a href="mailto:hayk_alekyan@edu.aua.am">hayk_alekyan@edu.aua.am</a><br/>
+                    📞 +374 98980098<br/>
+                    🔗 <a href="https://twitter.com/cofounder" target="_blank">Twitter</a></p>
+                </div>
+                <div style="flex: 1 1 200px; text-align:center;">
+                    <img src="https://your-cdn.com/cofounder.jpg" alt="Co-founder" 
+                        style="width:120px;border-radius:50%;"/>
+                    <p><strong style="font-size: 1.15rem;">Կարո Խաչատրյան</strong><br/>
+                    Philosophy Enthusiast & Community Manager</p>
+                    <p>✉️ <a href="mailto:karo_khachatryan@edu.aua.am">karo_khachatryan@edu.aua.am</a><br/>
+                    📞 +374 55540022<br/>
+                    🔗 <a href="https://twitter.com/cofounder" target="_blank">Twitter</a></p>
+                </div>
+            </div>
         </div>
         """
         st.markdown(team_html, unsafe_allow_html=True)
-
         st.markdown("---")
 
     # Forum
@@ -379,8 +397,8 @@ def main():
         name = user_email.split("@")[0]  
         st.title(f"Մուտք գործեցիք որպես {name}:")
 
-        title = st.text_input("📝 Topic Title")
-        content = st.text_area("💬 Your message")
+        title = st.text_input("📝 Վերնագիր")
+        content = st.text_area("💬 Բովանդակություն")
 
 
         if st.button("Հրապարակել Գրառումը"):
@@ -397,16 +415,15 @@ def main():
             else:
                 st.error("Խնդրում ենք լրացնել և վերնագիրը, և բովանդակությունը:")
 
+        st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)  # Vertical space
         st.subheader("📚 Բոլոր Հրապարակումները")
         all_posts = get_posts()
-
-
         filtered = all_posts
         if filtered:
             for p in filtered:
                 st.markdown(f"#### {p['title']}")
                 st.write(p["content"])
-                st.caption(f"By {p['name']} at {p['time']}")
+                st.caption(f"{p['name']}-ի կողմից: {p['time']}")
                 st.markdown("---")
         else:
             st.info("Հրապարակումներ չեն գտնվել:")
@@ -416,6 +433,37 @@ def main():
                 st.write(p["content"])
                 st.caption(f"By {p['name']} at {p['time']}")
                 st.markdown("---")
+
+        sorted_posts = sorted(
+            get_posts(),
+            key=lambda x: datetime.strptime(x["time"], "%Y-%m-%d %H:%M:%S"),
+            reverse=True,
+        )
+
+        st.subheader("📰 Պատասխանել Հրապարակմանը")
+
+        for post in sorted_posts:
+            st.markdown(f"**{post['title']}**")
+            st.markdown(f"*{post['name']} | {post['time']}*")
+            st.markdown(post["content"])
+
+            if "replies" in post:
+                for reply in post["replies"]:
+                    st.markdown(f"> 💬 **{reply['name']}**: {reply['content']}")
+
+            # 👇 Moved inside the loop
+            reply_content = st.text_input(f"Պատասխանել {post['name']}-ին", key=f"reply_{post['id']}")
+            if st.button("Պատասխանել", key=f"reply_btn_{post['id']}"):
+                if name and reply_content:
+                    reply = {
+                        "name": name,
+                        "content": reply_content,
+                        "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    }
+                    add_post(reply, reply_to_id=post["id"])
+                    st.success("✅ Պատասխանը հաջողությամբ հրապարակվել է։")
+
+
 
     # Quotes
     elif page == "Մտքեր": 
