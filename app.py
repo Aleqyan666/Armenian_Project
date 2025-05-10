@@ -198,7 +198,7 @@ def VideoCard(title, url):
 def main():
     with st.sidebar:
         page = option_menu(
-            menu_title="Navigation",
+            menu_title="Ցանկ",
             options=["Գլխավոր էջ", "Մեր Մասին", "Ֆորում", "Մտքեր", "Տեսադարան", "Գիտադարան"],
             icons=["house", "info-circle", "chat-left-text", "file-earmark-text", "camera-video", "book"],
             menu_icon="cast",
