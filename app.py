@@ -24,6 +24,14 @@ except ValueError:
     firebase_admin.initialize_app(cred)
 db = firestore.client()
 
+def get_user_count():
+    from firebase_admin import auth as admin_auth
+    page = admin_auth.list_users()
+    count = 0
+    while page:
+        count += len(page.users)
+        page = page.get_next_page()
+    return count
 
 def quote_id(quote: dict) -> str:
     return hashlib.sha1((quote["author"] + "|" + quote["text"]).encode()).hexdigest()
@@ -55,12 +63,12 @@ def DisplayQuoteCard(quote: dict, user_uid: str, favorites: set[str]):
 
     # Add or Remove button
     if is_fav:
-        if st.button("Remove from Favorites", key=f"rm_{qid}"):
+        if st.button("Հեռացնել հավանածներից", key=f"rm_{qid}"):
             favorites.remove(qid)
             save_favorites_for_user(user_uid, favorites)
             st.rerun()
     else:
-        if st.button("Add to Favorites", key=f"add_{qid}"):
+        if st.button("Հավանել", key=f"add_{qid}"):
             favorites.add(qid)
             save_favorites_for_user(user_uid, favorites)
             st.rerun()
@@ -93,23 +101,28 @@ def LoginUI():
 def RegisterUI():
     st.subheader("🆕 Գրանցում")
     email = st.text_input("էլ. հասցե", key="reg_email")
-    pwd   = st.text_input("Գաղտնաբառ", type="password", key="reg_pwd")
+    pwd   = st.text_input("Գաղտնաբառ (առնվազն 6 նիշ)", type="password", key="reg_pwd")
     if st.button("Ստեղծել հաշիվ"):
-        try:
-            user = auth.create_user_with_email_and_password(email, pwd)
-            st.success("Հաշիվը ստեղծվեց: Խնդրում ենք այժմ մուտք գործել:")
-        except Exception as e:
-            st.error("Գրանցվելիս տեղի ունեցավ սխալ:")
-            # st.error("Registration failed: " + str(e))
+        if len(pwd) < 6:
+            st.warning("Գաղտնաբառը պետք է պարունակի  առնվազն 6 նիշ:")
+        else:
+            try:
+                user = auth.create_user_with_email_and_password(email, pwd)
+                st.success("Հաշիվը ստեղծվեց: Խնդրում ենք այժմ մուտք գործել:")
+            except Exception as e:
+                st.error("Գրանցվելիս տեղի ունեցավ սխալ:")
+                # st.error("Registration failed: " + str(e))
 
 def RequireLogin():
     if "user" not in st.session_state:
-        choice = st.radio("Ունե՞ք հաշիվ:", ["Մուտք","Գրանցում"])
+        st.markdown("<h5 >Ունե՞ք հաշիվ:</h5>", unsafe_allow_html=True)
+        choice = st.radio("", ["Մուտք", "Գրանցում"], key="auth_choice")
+        
         if choice == "Մուտք":
             LoginUI()
         else:
             RegisterUI()
-        st.stop()  # halt further rendering until logged in
+        st.stop()  
 
 
 st.set_page_config(page_title="Հասարակական Բռնաճնշումներ", layout="wide")
@@ -175,7 +188,7 @@ def VideoCard(title, url):
                 <a href="{url}" target="_blank" style="text-decoration:none; color:inherit;">
                     <img src="{thumb}" style="width:100%; height:auto; border-radius:8px;"/>
                     <h4 style="margin:0.5rem 0 0.2rem;">{title}</h4>
-                    <p style="color:#555; font-size:0.9rem;">Watch on YouTube ▶️</p>
+                    <p style="color:#555; font-size:0.9rem;">Դիտել YouTube-ում ▶️</p>
                 </a>
             </div>
             """
@@ -186,7 +199,7 @@ def main():
     with st.sidebar:
         page = option_menu(
             menu_title="Navigation",
-            options=["Home", "About Us", "Forum", "Quotes", "Reportages", "Resources"],
+            options=["Գլխավոր էջ", "Մեր Մասին", "Ֆորում", "Մտքեր", "Տեսադարան", "Գիտադարան"],
             icons=["house", "info-circle", "chat-left-text", "file-earmark-text", "camera-video", "book"],
             menu_icon="cast",
             default_index=0,
@@ -203,25 +216,24 @@ def main():
             }
         )
 
-    # Home
-    if page == "Home":
+    # Գլխավոր էջ
+    if page == "Գլխավոր էջ":
         # CATEGORIES = ["Ethics", "Metaphysics", "Logic", "Politics", "Aesthetics", "Other"]
 
-        st.title("🏛️ Welcome to the Philosophy Portal")
+        st.title("🏛️ Welcome to the Portal")
         st.write("Explore thoughts, discussions, and ideas from the greatest minds and community voices.")
 
         posts = get_posts()
 
         # 2. Key metrics
         col1, col2, col3 = st.columns(3)
-        col1.metric("📄 Total Posts", len(posts))
-        #! col2.metric("👥 Registered Users", get_user_count())
-        # col3.metric("🏷️ Categories", len(CATEGORIES))
+        col1.metric("📄 Ընդհանուր հրապարոկումներ", len(posts))
+        col2.metric("👥 Գրանցված օգտատերեր", get_user_count())
 
         st.markdown("---")
 
         # 3. Search bar & quick filter
-        st.subheader("🔍 Search Forum Posts")
+        st.subheader("🔍 Փնտրել Հրապարակումներ")
         query = st.text_input("", placeholder="Type to search by title or content…")
         if query:
             filtered_posts = [
@@ -239,7 +251,7 @@ def main():
         )
 
         # 4. Latest Forum Posts
-        st.subheader("📰 Latest Forum Posts")
+        st.subheader("📰 Վերջին Հրապարակումները")
         if sorted_posts:
             for post in sorted_posts[:5]:
                 st.markdown(f"**{post['title']}**")
@@ -250,18 +262,17 @@ def main():
 
         
         # 4. Quote of the Day
-        st.subheader("💬 Quote of the Day")
+        st.subheader("💬 Օրվա Միտքը")
         quote = random.choice(GetQuotes())
         st.markdown(f"> _“{quote['text']}”_  \n— **{quote['author']}**")
     
         st.markdown("---")
 
 
-    elif page == "About Us":
-        st.title("About Us")
+    elif page == "Մեր Մասին":
+        st.title("Մեր Մասին")
 
-        # Mission & Vision
-        st.subheader("🌟 Our Mission")
+        st.subheader("🌟 Մեր Առաքելությունը")
         st.write(
             "At the Philosophy Portal, we strive to make philosophical discourse "
             "accessible, inclusive, and vibrant. We connect thinkers from around the world "
@@ -299,18 +310,22 @@ def main():
         st.markdown("---")
 
     # Forum
-    elif page == "Forum":
-        st.title("🗣️ Forum")
+    elif page == "Ֆորում":
+        st.title("🗣️ Ֆորում Հարթակ")
+        st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)  # Vertical space
+
         RequireLogin()
 
         user_email = st.session_state.user["email"]
-        st.title(f"Logged in as {user_email}")
 
         name = user_email.split("@")[0]  
+        st.title(f"Մուտք գործեցիք որպես {name}:")
+
         title = st.text_input("📝 Topic Title")
         content = st.text_area("💬 Your message")
 
-        if st.button("Submit Post"):
+
+        if st.button("Հրապարակել Գրառումը"):
             if title and content:
                 post = {
                     "id": int(datetime.now().timestamp()*1000),
@@ -320,18 +335,15 @@ def main():
                     "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 }
                 add_post(post)
-                st.success("Posted!")
+                st.success("Հրապարակված է:")
             else:
-                st.error("Fill in both title and content.")
+                st.error("Խնդրում ենք լրացնել և վերնագիրը, և բովանդակությունը:")
 
-        st.subheader("📚 All Posts")
-        # CATEGORIES = ["Ethics", "Metaphysics", "Logic", "Politics", "Aesthetics", "Other"]
-        # theme = st.selectbox("🔖 Filter by theme", CATEGORIES)
+        st.subheader("📚 Բոլոր Հրապարակումները")
         all_posts = get_posts()
 
-        # filtered = [p for p in all_posts if p.get("category") == theme]
+
         filtered = all_posts
-        # st.subheader(f"📚 Showing posts: {theme}")
         if filtered:
             for p in filtered:
                 st.markdown(f"#### {p['title']}")
@@ -339,7 +351,7 @@ def main():
                 st.caption(f"By {p['name']} at {p['time']}")
                 st.markdown("---")
         else:
-            st.info("No posts in this category.")
+            st.info("Հրապարակումներ չեն գտնվել:")
             
             for p in get_posts():
                 st.markdown(f"#### {p['title']}")
@@ -348,7 +360,7 @@ def main():
                 st.markdown("---")
 
     # Quotes
-    elif page == "Quotes": 
+    elif page == "Մտքեր": 
         st.title("Հայտնի Խոսքեր և Մտքեր")
 
         if "user" not in st.session_state:
@@ -384,59 +396,75 @@ def main():
             DisplayQuoteCard(q, user_uid, favorites)
 
 
-    # Reportages
-    elif page == "Reportages":
-
+    # Տեսադարան
+    elif page == "Տեսադարան":
         st.title("🎥 Տեսանյութեր և Ռեպորտաժներ")
+        st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)  # Vertical space
 
         videos = [
-    (
-        "Understanding Nietzsche: Philosophy in Modern Times",
-        "https://www.youtube.com/watch?v=fLJBzhcSWTk"
-    ),  
-    (   
-        "The Case for Idealism: Truth, Facts, and Existence",
-        "https://www.youtube.com/watch?v=7quW8AlngH0&ab_channel=NathanHawkins"
-    ),
-    (
-        "OSHO: Nobody Allows Anybody to Be Just Himself",
-        "https://www.youtube.com/watch?v=UngV-qwNkW0&ab_channel=OSHOInternational"
-    ),
-    (
-        "We’re wired for conformity. That’s why we have to practice dissent. Todd Rose for Big Think",
-        "https://www.youtube.com/watch?v=rd8VHbIYqRs&ab_channel=BigThink"
-    ),
-    (
-        "Nietzsche - Follow No One, Trust Yourself",
-        "https://www.youtube.com/watch?v=e-k7b8Zmh70&ab_channel=FreedominThought"
-    ),
-    (
-        "Existentialism Explained: Key Concepts of Jean-Paul Sartre",
-        "https://www.youtube.com/watch?v=VtP-N9pqoKk"
-    ),  
-    (
-        "The Philosophy of Absurdism: Albert Camus and the Absurd",
-        "https://www.youtube.com/watch?v=DTRJx1d4eks"
-    ),  
-    (
-        "Nietzsche’s Will to Power: An In-depth Analysis",
-        "https://www.youtube.com/watch?v=bb7Q8Wu1HNA"
-    ),  
-    (
-        "Heidegger and Being: Exploring the Concept of Being",
-        "https://www.youtube.com/watch?v=0-yvwlKTTbk"
-    )   
-]
+            (
+                "Understanding Nietzsche: Philosophy in Modern Times",
+                "https://www.youtube.com/watch?v=fLJBzhcSWTk",
+                "Փիլիսոփայություն"
+            ),  
+            (   
+                "The Case for Idealism: Truth, Facts, and Existence",
+                "https://www.youtube.com/watch?v=7quW8AlngH0&ab_channel=NathanHawkins",
+                "Փիլիսոփայություն"
+            ),
+            (
+                "OSHO: Nobody Allows Anybody to Be Just Himself",
+                "https://www.youtube.com/watch?v=UngV-qwNkW0&ab_channel=OSHOInternational",
+                "Ինդիվիդուալիզմ"
+            ),
+            (
+                "We’re wired for conformity. That’s why we have to practice dissent. Todd Rose for Big Think",
+                "https://www.youtube.com/watch?v=rd8VHbIYqRs&ab_channel=BigThink",
+                "Հոգեբանություն"
+            ),
+            (
+                "Nietzsche - Follow No One, Trust Yourself",
+                "https://www.youtube.com/watch?v=e-k7b8Zmh70&ab_channel=FreedominThought",
+                "Ինդիվիդուալիզմ"
+            ),
+            (
+                "Existentialism Explained: Key Concepts of Jean-Paul Sartre",
+                "https://www.youtube.com/watch?v=VtP-N9pqoKk",
+                "Էքզիստենցիալիզմ"
+            ),  
+            (
+                "The Philosophy of Absurdism: Albert Camus and the Absurd",
+                "https://www.youtube.com/watch?v=DTRJx1d4eks",
+                "Աբսուրդիզմ"
+            ),  
+            (
+                "Nietzsche’s Will to Power: An In-depth Analysis",
+                "https://www.youtube.com/watch?v=bb7Q8Wu1HNA",
+                "Ինդիվիդուալիզմ"
+            ),  
+            (
+                "Heidegger and Being: Exploring the Concept of Being",
+                "https://www.youtube.com/watch?v=0-yvwlKTTbk",
+                "Էքզիստենցիալիզմ"
+            )]
+        all_categories = sorted(set([v[2] for v in videos]))
+        selected_category = st.selectbox("🔍 Փնտրել ըստ թեմայի", ["Բոլորը"] + all_categories)
+
+        # Filter based on category
+        if selected_category != "Բոլորը":
+            filtered_videos = [v for v in videos if v[2] == selected_category]
+        else:
+            filtered_videos = videos
 
         # render in 2-column grid
-        for i in range(0, len(videos), 2):
+        for i in range(0, len(filtered_videos), 2):
             cols = st.columns(2, gap="large")
-            for col, (title, url) in zip(cols, videos[i:i+2]):
+            for col, (title, url, category) in zip(cols, filtered_videos[i:i+2]):
                 with col:
                     VideoCard(title, url)
 
     # Resources
-    elif page == "Resources":
+    elif page == "Գիտադարան":
         st.title("Բարի Գալուստ Գիտադարան")
         st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)  # Vertical space
         resource_dir = Path("resources")
