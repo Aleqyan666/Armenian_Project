@@ -249,8 +249,35 @@ def main():
     if page == "Գլխավոր էջ":
         # CATEGORIES = ["Ethics", "Metaphysics", "Logic", "Politics", "Aesthetics", "Other"]
 
-        st.title("🏛️ Welcome to the Portal")
-        st.write("Explore thoughts, discussions, and ideas from the greatest minds and community voices.")
+        st.title("📖 Ո՛Չ Հասարակական բռնաճնշումներին")
+        st.markdown("<div style='height:12px;'></div>", unsafe_allow_html=True)  # Vertical space
+        st.markdown("""
+        <div style="
+            background-color: #f9f9f9;
+            padding: 20px 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            border-left: 5px solid #f5c518;
+            margin-bottom: 25px;
+        ">
+            <h3 style="
+                color: #f5c518;
+                margin: 0;
+                padding: 0;
+                font-weight: 800;
+                text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.9);
+            ">
+                📌 Հիմնախնդրի Նկարագիրը
+            </h3>
+            <ul style="font-size: 18px; line-height: 1.6; color: #333333; margin-top: 10px;">
+                <li>Ինչո՞ւ և ինչպե՞ս է մարդը դառնում հասարակության ճնշումների զոհ։</li>
+                <li>Ինչո՞ւ և ինչպե՞ս է կորցնում իր ուրույն դիմագիծը։</li>
+            </ul>
+            <p style="font-size: 18px; line-height: 1.6; color: #333333;">
+                Մեր օրերում այս խնդիրն էլ ավելի մեծ թափ է հավաքել և հսկայական ստվեր է նետում անհատների վրա։
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
 
         posts = get_posts()
 
@@ -262,7 +289,7 @@ def main():
         st.markdown("---")
 
         # 3. Search bar & quick filter
-        st.subheader("🔍 Փնտրել Հրապարակումներ")
+        st.subheader("🔍 Փնտրել հրապարակումներ")
         query = st.text_input("", placeholder="Փնտել հրապարակումներ՝ ըստ վերնագրի և բովանդակության:")
         if query:
             filtered_posts = [
@@ -279,14 +306,14 @@ def main():
             reverse=True,
         )
 
-        st.subheader("📰 Վերջին Հրապարակումները")
+        st.subheader("📰 Վերջին հրապարակումները")
 
         if sorted_posts:
             for post in sorted_posts[:5]:
                 st.markdown(f"""
                     <div style="font-size: 1.3rem;">
                         <strong>{post['title']}</strong><br>
-                        <em>By {post['name']} on {post['time']}</em>
+                        <em>{post['name']}-ի կողմից {post['time']}</em>
                     </div>
                 """, unsafe_allow_html=True)
                 st.markdown("---")
@@ -295,7 +322,7 @@ def main():
 
         
         # 4. Quote of the Day
-        st.subheader("💬 Օրվա Միտքը")
+        st.subheader("💬 Օրվա միտքը")
         quote = random.choice(GetQuotes())
         st.markdown(f"""
             <div style="font-size: 20px;">
@@ -317,7 +344,7 @@ def main():
             ("Nietzsche’s Will to Power", "https://www.youtube.com/watch?v=bb7Q8Wu1HNA", "Ինդիվիդուալիզմ"),
             ("Heidegger and Being", "https://www.youtube.com/watch?v=0-yvwlKTTbk", "Էքզիստենցիալիզմ")
         ]
-        st.subheader("📺 Օրվա Տեսանյութը")
+        st.subheader("📺 Օրվա տեսանյութը")
         random_video = random.choice(videos)
         title, url, category = random_video
 
@@ -327,7 +354,7 @@ def main():
             st.markdown(f"""
             <div style="font-size: 20px;">
                 <strong style="font-size: 20px;">🎬 {title}</strong><br>
-                🌐 <a href="{url}" target="_blank">Դիտել Տեսանյութը</a><br>
+                🌐 <a href="{url}" target="_blank">Դիտել տեսանյութը</a><br>
                 🏷️ <em>Թեմա՝ {category}</em>
             </div>
             """, unsafe_allow_html=True)
@@ -336,58 +363,73 @@ def main():
             SingleVideoCard(title, url)
 
     elif page == "Մեր Մասին":
-        st.title("Մեր Մասին")
+        st.title("Մեր մասին")
 
-        st.subheader("🎯 Մեր Առաքելությունը")
-        st.write(
-            "At the Philosophy Portal, we strive to make philosophical discourse "
-            "accessible, inclusive, and vibrant. We connect thinkers from around the world "
-            "to explore timeless questions and contemporary issues."
-        )
-
-        # Team Profiles
-        team_html = """
-        ## 👤 Ծանոթացեք Մեր Թիմին 
-        <div style='height:20px;'></div> 
-
-        <div style="font-size: 1.05rem;">  <!-- Adjusted font size -->
-            <div style="display:flex; flex-wrap: wrap; gap:2rem;">
-                <div style="flex: 1 1 200px; text-align:center;">
-                    <img src="https://your-cdn.com/you.jpg" alt="Your Name" 
-                        style="width:120px;border-radius:50%;"/>
-                    <p><strong style="font-size: 1.15rem;">Գեորգի Գունդակչյան</strong><br/>
-                    Data Scientist & Lead Developer</p>
-                    <p>✉️ <a href="mailto:georgi_gundakchyan@edu.aua.am">georgi_gundakchyan@edu.aua.am</a><br/>
-                    📞 +374 99830003<br/>
-                    🔗 <a href="https://linkedin.com/in/yourprofile" target="_blank">LinkedIn</a></p>
-                </div>
-                <div style="flex: 1 1 200px; text-align:center;">
-                    <img src="https://your-cdn.com/cofounder.jpg" alt="Co-founder" 
-                        style="width:120px;border-radius:50%;"/>
-                    <p><strong style="font-size: 1.15rem;">Հայկ Ալեքյան</strong><br/>
-                    Philosophy Enthusiast & Community Manager</p>
-                    <p>✉️ <a href="mailto:hayk_alekyan@edu.aua.am">hayk_alekyan@edu.aua.am</a><br/>
-                    📞 +374 98980098<br/>
-                    🔗 <a href="https://twitter.com/cofounder" target="_blank">Twitter</a></p>
-                </div>
-                <div style="flex: 1 1 200px; text-align:center;">
-                    <img src="https://your-cdn.com/cofounder.jpg" alt="Co-founder" 
-                        style="width:120px;border-radius:50%;"/>
-                    <p><strong style="font-size: 1.15rem;">Կարո Խաչատրյան</strong><br/>
-                    Philosophy Enthusiast & Community Manager</p>
-                    <p>✉️ <a href="mailto:karo_khachatryan@edu.aua.am">karo_khachatryan@edu.aua.am</a><br/>
-                    📞 +374 55540022<br/>
-                    🔗 <a href="https://twitter.com/cofounder" target="_blank">Twitter</a></p>
-                </div>
+        st.subheader("🎯 Մեր առաքելությունը")
+        st.markdown("""
+        <div style="
+            background-color: #ffffff;
+            padding: 25px 30px;
+            border-radius: 15px;
+            border: 2px solid #f5c518;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            margin-top: 20px;
+            margin-bottom: 30px;
+        ">
+            <h4 style="color: #222222; margin-top: 0; font-size: 22px;">🎯 Մեր Նպատակները</h4>
+            <div style="font-size: 22px; line-height: 1.8; color: #333333; padding-left: 10px;">
+                <p>⁉️ Դուրս բերել հասարակության կողմից արվող ճնշումների առաջացման պատճառներն ու հիմքերը։</p>
+                <p>🔎 Քննել հասարակական ճնշումների հետևանքների մասին։</p>
+                <p>💭 Առաջադրել լուծումներ՝ հասարակության նախապաշարմունքներին ու կարծրացած ճշմարտություններին զոհ չդառնալու համար։</p>
             </div>
         </div>
-        """
-        st.markdown(team_html, unsafe_allow_html=True)
-        st.markdown("---")
+        """, unsafe_allow_html=True)
+
+
+
+        st.markdown("## 👤 Ծանոթացեք մեր թիմին")
+        st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)
+
+        col1, col2, col3 = st.columns(3)
+
+        with col1:
+            st.image("resources/Georgi_pic.jpg", width=150)
+            st.markdown(
+                """
+                **Գեորգի Գունդակչյան**  
+                Հետազոտող և վերլուծաբան  
+                ✉️ [georgi_gundakchyan@edu.aua.am](mailto:georgi_gundakchyan@edu.aua.am)  
+                📞 +374 99830003  
+                """
+            )
+
+        with col2:
+            st.image("resources/Hayk_pic.jpg", width=150)
+            st.markdown(
+                """
+                **Հայկ Ալեքյան**  
+                Կայքի պատասխանատու  
+                ✉️ [hayk_alekyan@edu.aua.am](mailto:hayk_alekyan@edu.aua.am)  
+                📞 +374 98980098  
+                """
+            )
+
+        with col3:
+            st.image("resources/Karo_pic.jpg", width=175)
+            st.markdown(
+                """
+                **Կարո Խաչատրյան**  
+                Հետազոտող և վերլուծաբան  
+                ✉️ [karo_khachatryan@edu.aua.am](mailto:karo_khachatryan@edu.aua.am)  
+                📞 +374 55540022  
+                """
+            )
+
+
 
     # Forum
     elif page == "Ֆորում":
-        st.title("🗣️ Ֆորում Հարթակ")
+        st.title("🗣️ Ֆորում հարթակ")
         st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)  # Vertical space
 
         RequireLogin()
@@ -401,7 +443,7 @@ def main():
         content = st.text_area("💬 Բովանդակություն")
 
 
-        if st.button("Հրապարակել Գրառումը"):
+        if st.button("Հրապարակել գրառումը"):
             if title and content:
                 post = {
                     "id": int(datetime.now().timestamp()*1000),
@@ -416,7 +458,7 @@ def main():
                 st.error("Խնդրում ենք լրացնել և վերնագիրը, և բովանդակությունը:")
 
         st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)  # Vertical space
-        st.subheader("📚 Բոլոր Հրապարակումները")
+        st.subheader("📚 Բոլոր հրապարակումները")
         all_posts = get_posts()
         filtered = all_posts
         if filtered:
@@ -431,7 +473,7 @@ def main():
             for p in get_posts():
                 st.markdown(f"#### {p['title']}")
                 st.write(p["content"])
-                st.caption(f"By {p['name']} at {p['time']}")
+                st.caption(f"{p['name']}-ի կողմից at {p['time']}")
                 st.markdown("---")
 
         sorted_posts = sorted(
@@ -440,7 +482,7 @@ def main():
             reverse=True,
         )
 
-        st.subheader("📰 Պատասխանել Հրապարակմանը")
+        st.subheader("📰 Պատասխանել հրապարակմանը")
 
         for post in sorted_posts:
             st.markdown(f"**{post['title']}**")
@@ -467,7 +509,7 @@ def main():
 
     # Quotes
     elif page == "Մտքեր": 
-        st.title("Հայտնի Խոսքեր և Մտքեր")
+        st.title("Հայտնի խոսքեր և մտքեր")
 
         if "user" not in st.session_state:
             st.error("Խնդրում ենք մուտք գործել կայքեջ:")
@@ -482,7 +524,7 @@ def main():
         with col1:
             author_filter = st.selectbox("Փնտրել ըստ հեղինակի", ["Բոլորը"] + authors)
         with col2:
-            show_favs = st.checkbox("Իմ Հավանածները")
+            show_favs = st.checkbox("Իմ հավանածները")
 
         # Fetch current favorites once
         favorites = get_favorites_for_user(user_uid)
@@ -504,15 +546,10 @@ def main():
 
     # Տեսադարան
     elif page == "Տեսադարան":
-        st.title("🎥 Տեսանյութեր և Ռեպորտաժներ")
+        st.title("🎥 Տեսանյութեր և ռեպորտաժներ")
         st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)  # Vertical space
 
         videos = [
-            (
-                "Understanding Nietzsche: Philosophy in Modern Times",
-                "https://www.youtube.com/watch?v=fLJBzhcSWTk",
-                "Փիլիսոփայություն"
-            ),  
             (   
                 "The Case for Idealism: Truth, Facts, and Existence",
                 "https://www.youtube.com/watch?v=7quW8AlngH0&ab_channel=NathanHawkins",
@@ -523,6 +560,11 @@ def main():
                 "https://www.youtube.com/watch?v=UngV-qwNkW0&ab_channel=OSHOInternational",
                 "Ինդիվիդուալիզմ"
             ),
+            (
+                "Understanding Nietzsche: Philosophy in Modern Times",
+                "https://www.youtube.com/watch?v=fLJBzhcSWTk",
+                "Փիլիսոփայություն"
+            ),  
             (
                 "We’re wired for conformity. That’s why we have to practice dissent. Todd Rose for Big Think",
                 "https://www.youtube.com/watch?v=rd8VHbIYqRs&ab_channel=BigThink",
@@ -572,15 +614,15 @@ def main():
 
     # Resources
     elif page == "Գիտադարան":
-        st.title("Բարի Գալուստ Գիտադարան")
+        st.title("Բարի գալուստ գիտադարան")
         st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)  # Vertical space
         resource_dir = Path("resources")
         if not resource_dir.exists():
             st.info("Ֆայլերը չեն գնտվել:")
         else:
             resources = [
-                ("Այսպես Խոսեց Զրադաշտը.pdf", resource_dir / "Այսպես Խոսեց Զրադաշտը.pdf"),
-                ("Բարուց և Չարից Անդին.pdf", resource_dir / "Բարուց և Չարից Անդին.pdf"),
+                ("Այսպես խոսեց Զրադաշտը.pdf", resource_dir / "Այսպես Խոսեց Զրադաշտը.pdf"),
+                ("Բարուց և չարից անդին.pdf", resource_dir / "Բարուց և Չարից Անդին.pdf"),
                 ("The Power of Conformity.pdf", resource_dir / "The Power of Conformity.pdf"),
                 ("Festinger, Leon - A theory of cognitive dissonance (1968, Stanford University Press).pdf", resource_dir / "Festinger, Leon - A theory of cognitive dissonance (1968, Stanford University Press).pdf"),
                 ("Cognitive Dissonance. Reexamining a Pivotal Theory in Psychology, Second Edition.pdf", resource_dir / "Cognitive Dissonance. Reexamining a Pivotal Theory in Psychology, Second Edition.pdf")
@@ -631,7 +673,7 @@ def main():
                                     from docx import Document
                                     doc = Document(str(path_obj))
                                     text = ''.join([p.text for p in doc.paragraphs])
-                                    st.text_area("Փաստաթղթի Նախադիոտւմ", text, height=300)
+                                    st.text_area("Փաստաթղթի նախադիոտւմ", text, height=300)
                                 except ImportError:
                                     st.warning("Install python-docx to preview DOCX files.")
                             # Close button
@@ -639,6 +681,22 @@ def main():
                                 st.session_state[f"view_{name}"] = False
                 else:
                     st.error(f"Ֆայլերը չեն գտնվել: {name}")
+
+        # External Links
+        st.markdown("---")  # Horizontal line for separation
+        st.subheader("🔗 Հղումներ")
+
+        links = [
+            ("How does social pressure impact our choices? – BetterHelp", "https://www.betterhelp.com/advice/general/how-does-social-pressure-impact-our-choices/"),
+            ("Social anxiety disorder: Signs, symptoms, & treatments – Choosing Therapy", "https://www.choosingtherapy.com/social-anxiety-disorder/"),
+            ("Personal values vs expectations of others – OpenUp", "https://openup.com/blog/personal-values-vs-expectations-of-others/"),
+            ("Stereotype threat – University of Colorado Boulder", "https://www.colorado.edu/center/teaching-learning/inclusivity/stereotype-threat"),
+            ("20 ways to avoid peer pressure – Your Life Counts", "https://yourlifecounts.org/learning-center/peer-pressure/20-ways-to-avoid-peer-pressure/"),
+            ("How might cultural norms dictate individual behaviours? – TutorChase", "https://www.tutorchase.com/answers/ib/psychology/how-might-cultural-norms-dictate-individual-behaviours")
+        ]
+
+        for title, url in links:
+            st.markdown(f"- [{title}]({url})")
 
 if __name__ == "__main__":
     main() 
